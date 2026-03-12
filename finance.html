@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الإدارة المالية | تاج الإبداع</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{background:var(--gray-light)}
+.fin-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 70px)}
+.sidebar{background:var(--black);border-left:var(--border-red);padding:0;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto}
+html[dir="ltr"] .sidebar{border-left:none;border-right:var(--border-red)}
+.sidebar-section{border-bottom:1px solid var(--gray-mid);padding:1rem 0}
+.sidebar-section-title{color:var(--red);font-size:.7rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;padding:0 1.2rem 8px}
+.sidebar-link{display:flex;align-items:center;gap:8px;padding:9px 1.2rem;color:#aaa;text-decoration:none;font-size:.88rem;font-weight:600;transition:all .15s;border:none;background:none;width:100%;cursor:pointer;font-family:var(--font)}
+.sidebar-link:hover,.sidebar-link.active{background:var(--red);color:var(--white)}
+.fin-content{padding:1.5rem;overflow-y:auto}
+.panel{display:none}.panel.active{display:block}
+.fin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.fin-stat{background:var(--white);border:var(--border);box-shadow:var(--shadow);padding:1.2rem}
+.fin-stat .num{font-size:1.8rem;font-weight:800;color:var(--red)}
+.fin-stat .lbl{font-size:.8rem;color:#666;font-weight:700}
+.fin-stat.green .num{color:#198754}
+.fin-stat.blue .num{color:#0d6efd}
+.journal-row{display:grid;grid-template-columns:120px 1fr 120px 120px;gap:.5rem;align-items:center;padding:8px 0;border-bottom:1px dashed #ccc}
+.doc-preview{background:var(--white);border:3px solid var(--black);padding:2rem;max-width:750px;margin:0 auto;box-shadow:var(--shadow)}
+.doc-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--black);padding-bottom:1rem;margin-bottom:1.5rem}
+.doc-logo{font-size:2rem;font-weight:800;color:var(--red)}
+.doc-title{font-size:1.8rem;font-weight:800;text-align:center;margin-bottom:1rem;border:3px solid var(--black);padding:8px;text-transform:uppercase}
+.doc-meta{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.5rem}
+.doc-meta-item{display:flex;gap:.5rem;border:2px solid #000;padding:6px 10px}
+.doc-meta-label{font-weight:800;min-width:80px;color:var(--red)}
+.doc-table th{background:var(--black);color:white;padding:8px 12px;text-align:right;font-size:.9rem}
+.doc-table td{padding:8px 12px;border:2px solid #000;font-size:.9rem}
+.doc-totals{margin-top:1rem;margin-right:auto;width:250px}
+.doc-total-row{display:flex;justify-content:space-between;border:2px solid #000;padding:6px 12px;font-weight:700}
+.doc-total-row.final{background:var(--black);color:white}
+.doc-footer{display:flex;justify-content:space-between;margin-top:2rem;padding-top:1.5rem;border-top:3px solid #000}
+.doc-sign{text-align:center;min-width:150px}
+.doc-sign .line{border-top:2px solid #000;margin-bottom:4px}
+.doc-sign span{font-size:.8rem;font-weight:700}
+.year-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.year-tab{background:var(--white);border:var(--border);padding:6px 16px;cursor:pointer;font-weight:700;font-family:var(--font)}
+.year-tab.active{background:var(--black);color:white}
+.account-tree{list-style:none;padding:0}
+.account-tree li{border:2px solid var(--black);margin-bottom:4px;background:white}
+.account-tree .acc-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;font-weight:700}
+.account-tree .acc-header:hover{background:var(--gray-light)}
+.account-tree .acc-children{padding:0 1rem;display:none}
+.account-tree .acc-children.open{display:block}
+.account-tree .acc-child{border:1px solid #ccc;padding:8px 12px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;background:#fafafa}
+.table-wrap{overflow-x:auto;background:white;border:var(--border);box-shadow:var(--shadow)}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+.filter-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.filter-row input,.filter-row select{font-family:var(--font);border:var(--border);padding:8px 10px;font-size:.85rem}
+@media(max-width:900px){.fin-layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}.fin-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.fin-stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><div style="width:42px;height:42px;background:var(--red);border:2px solid white;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:1.1rem;">تاج</div><div class="nav-logo-text"><span>تاج</span> المالية</div></a>
+  <ul class="nav-links" style="display:flex">
+    <li><a href="admin-dashboard.html">← الإدارة</a></li>
+    <li><a href="index.html">الموقع</a></li>
+    <li><button class="lang-btn" onclick="doLogout()" style="background:#666">خروج</button></li>
+  </ul>
+</nav>
+
+<div class="fin-layout">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">لوحة التحكم</div>
+      <button class="sidebar-link active" onclick="showPanel('overview')">📊 نظرة عامة</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">السنوات المالية</div>
+      <button class="sidebar-link" onclick="showPanel('years')">📅 إدارة السنوات</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">المحاسبة</div>
+      <button class="sidebar-link" onclick="showPanel('accounts')">🌳 شجرة الحسابات</button>
+      <button class="sidebar-link" onclick="showPanel('journal')">📒 القيود اليومية</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">المستندات</div>
+      <button class="sidebar-link" onclick="showPanel('invoices')">🧾 الفواتير</button>
+      <button class="sidebar-link" onclick="showPanel('receipts')">📥 سندات قبض</button>
+      <button class="sidebar-link" onclick="showPanel('payments')">📤 سندات صرف</button>
+      <button class="sidebar-link" onclick="showPanel('quotations')">📋 عروض أسعار</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">التقارير</div>
+      <button class="sidebar-link" onclick="showPanel('reports')">📈 التقارير</button>
+    </div>
+  </div>
+
+  <div class="fin-content">
+    <!-- OVERVIEW -->
+    <div class="panel active" id="panel-overview">
+      <div class="brut-section-title" style="margin-bottom:1.5rem">لوحة التحكم المالية</div>
+      <div class="fin-stats">
+        <div class="fin-stat green"><div class="lbl">إجمالي الإيرادات</div><div class="num" id="ovRevenue">—</div><div style="font-size:.75rem;color:#999;margin-top:4px">ر.ع</div></div>
+        <div class="fin-stat" style="--c:var(--red)"><div class="lbl">إجمالي المصروفات</div><div class="num" id="ovExpenses" style="color:var(--red)">—</div><div style="font-size:.75rem;color:#999;margin-top:4px">ر.ع</div></div>
+        <div class="fin-stat blue"><div class="lbl">الرصيد الحالي</div><div class="num" id="ovBalance">—</div><div style="font-size:.75rem;color:#999;margin-top:4px">ر.ع</div></div>
+        <div class="fin-stat"><div class="lbl">عدد العمليات</div><div class="num" id="ovCount">—</div></div>
+      </div>
+      <div class="brut-card"><h3 style="font-weight:800;margin-bottom:1rem">نظرة عامة على الوضع المالي</h3><p style="color:#666;line-height:1.8">مرحباً بك في نظام الإدارة المالية لشركة تاج الإبداع. استخدم القائمة الجانبية للوصول إلى القيود اليومية والمستندات المالية والتقارير.</p></div>
+    </div>
+
+    <!-- YEARS -->
+    <div class="panel" id="panel-years">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">السنوات المالية</div>
+        <button class="brut-btn red" onclick="openModal('yearModal')">+ سنة مالية جديدة</button>
+      </div>
+      <div class="table-wrap"><table class="brut-table"><thead><tr><th>م</th><th>السنة</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="yearsBody"></tbody></table></div>
+    </div>
+
+    <!-- ACCOUNTS -->
+    <div class="panel" id="panel-accounts">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">شجرة الحسابات</div>
+        <button class="brut-btn red" onclick="openModal('accModal')">+ حساب جديد</button>
+      </div>
+      <div id="accountTree"></div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="panel" id="panel-journal">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">القيود اليومية</div>
+        <button class="brut-btn red" onclick="openModal('journalModal')">+ قيد جديد</button>
+      </div>
+      <div class="filter-row">
+        <input type="date" id="jFilterFrom" onchange="filterJournal()">
+        <input type="date" id="jFilterTo" onchange="filterJournal()">
+        <select id="jFilterAcc" onchange="filterJournal()"><option value="">كل الحسابات</option></select>
+        <input type="text" placeholder="بحث..." id="jSearch" oninput="filterJournal()" style="flex:1;min-width:150px">
+      </div>
+      <div class="table-wrap"><table class="brut-table"><thead><tr><th>رقم القيد</th><th>التاريخ</th><th>البيان</th><th>الحساب المدين</th><th>الحساب الدائن</th><th>المبلغ</th><th>ملاحظات</th><th>إجراءات</th></tr></thead><tbody id="journalBody"></tbody></table></div>
+    </div>
+
+    <!-- INVOICES -->
+    <div class="panel" id="panel-invoices">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">الفواتير</div>
+        <button class="brut-btn red" onclick="openDocModal('invoice')">+ فاتورة جديدة</button>
+      </div>
+      <div class="table-wrap"><table class="brut-table"><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>الصافي</th><th>إجراءات</th></tr></thead><tbody id="invoicesBody"></tbody></table></div>
+    </div>
+
+    <!-- RECEIPTS -->
+    <div class="panel" id="panel-receipts">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">سندات القبض</div>
+        <button class="brut-btn red" onclick="openDocModal('receipt')">+ سند قبض جديد</button>
+      </div>
+      <div class="table-wrap"><table class="brut-table"><thead><tr><th>رقم السند</th><th>التاريخ</th><th>المستلم منه</th><th>المبلغ</th><th>طريقة الدفع</th><th>إجراءات</th></tr></thead><tbody id="receiptsBody"></tbody></table></div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="panel" id="panel-payments">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">سندات الصرف</div>
+        <button class="brut-btn red" onclick="openDocModal('payment')">+ سند صرف جديد</button>
+      </div>
+      <div class="table-wrap"><table class="brut-table"><thead><tr><th>رقم السند</th><th>التاريخ</th><th>المدفوع له</th><th>المبلغ</th><th>طريقة الدفع</th><th>إجراءات</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+    </div>
+
+    <!-- QUOTATIONS -->
+    <div class="panel" id="panel-quotations">
+      <div class="section-header">
+        <div class="brut-section-title" style="margin:0">عروض الأسعار</div>
+        <button class="brut-btn red" onclick="openDocModal('quotation')">+ عرض سعر جديد</button>
+      </div>
+      <div class="table-wrap"><table class="brut-table"><thead><tr><th>رقم العرض</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>الصافي</th><th>المدة</th><th>إجراءات</th></tr></thead><tbody id="quotationsBody"></tbody></table></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="panel" id="panel-reports">
+      <div class="brut-section-title" style="margin-bottom:1.5rem">التقارير المحاسبية</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem">
+        <div class="brut-card" style="cursor:pointer" onclick="showReport('journal-report')"><h3 style="font-weight:800;color:var(--red);margin-bottom:.5rem">📒 تقرير القيود اليومية</h3><p style="font-size:.9rem;color:#666">عرض جميع القيود اليومية المسجلة</p></div>
+        <div class="brut-card" style="cursor:pointer" onclick="showReport('ledger')"><h3 style="font-weight:800;color:var(--red);margin-bottom:.5rem">📚 دفتر الأستاذ</h3><p style="font-size:.9rem;color:#666">حركة كل حساب على حدة</p></div>
+        <div class="brut-card" style="cursor:pointer" onclick="showReport('trial-balance')"><h3 style="font-weight:800;color:var(--red);margin-bottom:.5rem">⚖️ ميزان المراجعة</h3><p style="font-size:.9rem;color:#666">التحقق من توازن الحسابات</p></div>
+        <div class="brut-card" style="cursor:pointer" onclick="showReport('pnl')"><h3 style="font-weight:800;color:var(--red);margin-bottom:.5rem">📈 الأرباح والخسائر</h3><p style="font-size:.9rem;color:#666">قائمة الدخل للفترة المحددة</p></div>
+      </div>
+      <div id="reportContent" style="margin-top:2rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Year Modal -->
+<div class="modal-overlay" id="yearModal">
+  <div class="modal-box">
+    <div class="modal-header"><h3>سنة مالية جديدة</h3><button class="modal-close" onclick="closeModal('yearModal')">✕</button></div>
+    <input type="hidden" id="yrId">
+    <div class="form-group"><label>السنة *</label><input class="brut-input" id="yrName" placeholder="مثال: 2025"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>تاريخ البداية</label><input type="date" class="brut-input" id="yrFrom"></div>
+      <div class="form-group"><label>تاريخ النهاية</label><input type="date" class="brut-input" id="yrTo"></div>
+    </div>
+    <div class="form-group"><label>الرصيد الافتتاحي (ر.ع)</label><input type="number" class="brut-input" id="yrBalance" placeholder="0.000"></div>
+    <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
+      <button class="brut-btn" onclick="closeModal('yearModal')">إلغاء</button>
+      <button class="brut-btn red" onclick="saveYear()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Account Modal -->
+<div class="modal-overlay" id="accModal">
+  <div class="modal-box">
+    <div class="modal-header"><h3>حساب جديد</h3><button class="modal-close" onclick="closeModal('accModal')">✕</button></div>
+    <input type="hidden" id="acId">
+    <div class="form-group"><label>اسم الحساب *</label><input class="brut-input" id="acName" placeholder="اسم الحساب"></div>
+    <div class="form-group"><label>رقم الحساب</label><input class="brut-input" id="acCode" placeholder="مثال: 1001"></div>
+    <div class="form-group"><label>نوع الحساب</label>
+      <select class="brut-select" id="acType">
+        <option value="asset">أصول</option><option value="liability">خصوم</option>
+        <option value="equity">حقوق الملكية</option><option value="revenue">إيرادات</option>
+        <option value="expense">مصروفات</option><option value="purchase">مشتريات</option>
+      </select>
+    </div>
+    <div class="form-group"><label>حساب رئيسي / فرعي</label>
+      <select class="brut-select" id="acParent"><option value="">رئيسي</option></select>
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
+      <button class="brut-btn" onclick="closeModal('accModal')">إلغاء</button>
+      <button class="brut-btn red" onclick="saveAccount()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Journal Modal -->
+<div class="modal-overlay" id="journalModal">
+  <div class="modal-box" style="max-width:650px">
+    <div class="modal-header"><h3>قيد يومي جديد</h3><button class="modal-close" onclick="closeModal('journalModal')">✕</button></div>
+    <input type="hidden" id="jId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>رقم القيد (تلقائي)</label><input class="brut-input" id="jNum" placeholder="تلقائي" readonly></div>
+      <div class="form-group"><label>التاريخ *</label><input type="date" class="brut-input" id="jDate"></div>
+    </div>
+    <div class="form-group"><label>البيان *</label><input class="brut-input" id="jDesc" placeholder="وصف العملية"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>الحساب المدين</label><select class="brut-select" id="jDebit"><option value="">اختر</option></select></div>
+      <div class="form-group"><label>الحساب الدائن</label><select class="brut-select" id="jCredit"><option value="">اختر</option></select></div>
+    </div>
+    <div class="form-group"><label>المبلغ (ر.ع) *</label><input type="number" class="brut-input" id="jAmount" placeholder="0.000" step="0.001"></div>
+    <div class="form-group"><label>ملاحظات</label><textarea class="brut-input" id="jNotes" rows="2"></textarea></div>
+    <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
+      <button class="brut-btn" onclick="closeModal('journalModal')">إلغاء</button>
+      <button class="brut-btn red" onclick="saveJournal()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Document Modal (Invoice/Receipt/Payment/Quotation) -->
+<div class="modal-overlay" id="docModal">
+  <div class="modal-box" style="max-width:750px">
+    <div class="modal-header"><h3 id="docModalTitle">مستند جديد</h3><button class="modal-close" onclick="closeModal('docModal')">✕</button></div>
+    <input type="hidden" id="docType"><input type="hidden" id="docId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>الرقم (تلقائي)</label><input class="brut-input" id="docNum" readonly></div>
+      <div class="form-group"><label>التاريخ</label><input type="date" class="brut-input" id="docDate"></div>
+      <div class="form-group"><label id="docPartyLabel">اسم العميل</label><input class="brut-input" id="docParty" placeholder="اسم العميل / المورد"></div>
+      <div class="form-group"><label>المبلغ (ر.ع)</label><input type="number" class="brut-input" id="docAmount" placeholder="0.000" step="0.001" oninput="calcDocTotals()"></div>
+    </div>
+    <!-- Extra fields for invoice/quotation -->
+    <div id="docItemsSection">
+      <div style="font-weight:800;margin-bottom:.5rem;margin-top:.5rem">البنود / الأصناف:</div>
+      <table class="brut-table" style="margin-bottom:.5rem">
+        <thead><tr><th>البيان</th><th id="docItemQtyLabel">الكمية/م²</th><th>القيمة</th><th>الإجمالي</th><th></th></tr></thead>
+        <tbody id="docItemsBody"></tbody>
+      </table>
+      <button class="brut-btn" style="font-size:.85rem;padding:6px 14px" onclick="addDocItem()">+ إضافة بند</button>
+      <div style="margin-top:.8rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
+        <div class="form-group"><label>خصم (%)</label><input type="number" class="brut-input" id="docDiscount" placeholder="0" oninput="calcDocTotals()"></div>
+        <div class="form-group"><label>ضريبة VAT (%)</label><input type="number" class="brut-input" id="docVat" placeholder="0" oninput="calcDocTotals()"></div>
+        <div class="form-group"><label>الصافي (ر.ع)</label><input type="text" class="brut-input" id="docNet" readonly></div>
+      </div>
+    </div>
+    <!-- Receipt/Payment extra -->
+    <div id="docPaySection" style="display:none">
+      <div class="form-group"><label>طريقة الدفع</label>
+        <div style="display:flex;gap:1rem;margin-top:.5rem">
+          <label><input type="radio" name="payMethod" value="نقداً"> نقداً</label>
+          <label><input type="radio" name="payMethod" value="شيك"> شيك</label>
+          <label><input type="radio" name="payMethod" value="تحويل"> تحويل</label>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="form-group"><label>من فاتورة رقم</label><input class="brut-input" id="docRefInv" placeholder="TAJ/--/----"></div>
+        <div class="form-group"><label>المتبقي (ر.ع)</label><input type="number" class="brut-input" id="docRemaining" placeholder="0.000"></div>
+      </div>
+    </div>
+    <!-- Quotation extra -->
+    <div id="docQuoteSection" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="form-group"><label>عدد الدفعات</label><input type="number" class="brut-input" id="docInstallments" placeholder="1"></div>
+        <div class="form-group"><label>مدة التنفيذ (يوم)</label><input type="number" class="brut-input" id="docDuration" placeholder="30"></div>
+      </div>
+      <div class="form-group"><label>تفاصيل العمل</label><textarea class="brut-input" id="docWorkDetails" rows="2"></textarea></div>
+    </div>
+    <div class="form-group" style="margin-top:.8rem"><label>الوصف / وذلك بمقابل</label><textarea class="brut-input" id="docDesc" rows="2"></textarea></div>
+    <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap">
+      <button class="brut-btn" onclick="closeModal('docModal')">إلغاء</button>
+      <button class="brut-btn" onclick="printDoc()">🖨️ طباعة</button>
+      <button class="brut-btn red" onclick="saveDoc()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Doc Overlay -->
+<div class="modal-overlay" id="printOverlay">
+  <div style="max-width:800px;width:100%;max-height:95vh;overflow-y:auto;background:white;border:3px solid black;padding:2rem">
+    <div style="display:flex;justify-content:space-between;margin-bottom:1rem;display-print:none">
+      <button class="brut-btn" onclick="window.print()">🖨️ طباعة</button>
+      <button class="brut-btn" onclick="closeModal('printOverlay')">✕ إغلاق</button>
+    </div>
+    <div id="printContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+if(sessionStorage.getItem('taj_admin')!=='1'){window.location.href='admin.html';throw '';}
+const app = initializeApp({apiKey:"AIzaSyAaqn0emE1XRE1r95jzz6zOyHJpYhG6PDE",authDomain:"taj-alibdaa.firebaseapp.com",projectId:"taj-alibdaa",storageBucket:"taj-alibdaa.firebasestorage.app",messagingSenderId:"822530121102",appId:"1:822530121102:web:4f105f37c9b7a31e9298df"});
+const db = getFirestore(app);
+window.doLogout=()=>{sessionStorage.removeItem('taj_admin');window.location.href='index.html';}
+window.openModal=(id)=>document.getElementById(id).classList.add('active');
+window.closeModal=(id)=>document.getElementById(id).classList.remove('active');
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// State
+let years=[], accounts=[], journals=[], invoices=[], receipts=[], payments=[], quotations=[];
+let docItems=[];
+
+window.showPanel=(name)=>{
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelectorAll('.sidebar-link').forEach(l=>l.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+};
+
+async function loadAll(){
+  try{
+    const [ys,as,js,inv,rec,pay,quo]=await Promise.all([
+      getDocs(collection(db,'fin_years')),getDocs(collection(db,'accounts')),
+      getDocs(query(collection(db,'journals'),orderBy('number','desc'))),
+      getDocs(query(collection(db,'invoices'),orderBy('number','desc'))),
+      getDocs(query(collection(db,'receipts'),orderBy('number','desc'))),
+      getDocs(query(collection(db,'payments'),orderBy('number','desc'))),
+      getDocs(query(collection(db,'quotations'),orderBy('number','desc')))
+    ]);
+    years=ys.docs.map(d=>({id:d.id,...d.data()}));
+    accounts=as.docs.map(d=>({id:d.id,...d.data()}));
+    journals=js.docs.map(d=>({id:d.id,...d.data()}));
+    invoices=inv.docs.map(d=>({id:d.id,...d.data()}));
+    receipts=rec.docs.map(d=>({id:d.id,...d.data()}));
+    payments=pay.docs.map(d=>({id:d.id,...d.data()}));
+    quotations=quo.docs.map(d=>({id:d.id,...d.data()}));
+    renderAll();
+  }catch(e){console.error(e);}
+}
+
+function fmt(n){return parseFloat(n||0).toFixed(3);}
+
+function renderAll(){
+  // Overview
+  const rev=invoices.reduce((s,i)=>s+parseFloat(i.net||0),0)+receipts.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+  const exp=payments.reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  document.getElementById('ovRevenue').textContent=fmt(rev);
+  document.getElementById('ovExpenses').textContent=fmt(exp);
+  document.getElementById('ovBalance').textContent=fmt(rev-exp);
+  document.getElementById('ovCount').textContent=journals.length;
+  renderYears(); renderAccounts(); renderJournal(); renderInvoices(); renderReceipts(); renderPayments(); renderQuotations();
+  // Fill account selects
+  const acc=accounts.map(a=>`<option value="${a.name}">${a.code?a.code+' - ':''} ${a.name}</option>`).join('');
+  document.getElementById('jDebit').innerHTML='<option value="">اختر</option>'+acc;
+  document.getElementById('jCredit').innerHTML='<option value="">اختر</option>'+acc;
+  document.getElementById('jFilterAcc').innerHTML='<option value="">كل الحسابات</option>'+acc;
+  document.getElementById('acParent').innerHTML='<option value="">رئيسي</option>'+accounts.filter(a=>!a.parent).map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+
+// YEARS
+function renderYears(){
+  const tb=document.getElementById('yearsBody');
+  if(!years.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem">لا توجد سنوات مالية</td></tr>';return;}
+  tb.innerHTML=years.map((y,i)=>`<tr><td>${i+1}</td><td>${y.name}</td><td>${y.from||''}</td><td>${y.to||''}</td><td><span class="badge ${y.active?'success':'warning'}">${y.active?'نشطة':'مغلقة'}</span></td><td><button class="action-btn" onclick="activateYear('${y.id}')">تفعيل</button><button class="action-btn danger" onclick="delYear('${y.id}')">حذف</button></td></tr>`).join('');
+}
+window.saveYear=async()=>{
+  const name=document.getElementById('yrName').value;if(!name)return;
+  await addDoc(collection(db,'fin_years'),{name,from:document.getElementById('yrFrom').value,to:document.getElementById('yrTo').value,balance:parseFloat(document.getElementById('yrBalance').value)||0,active:false,createdAt:new Date().toISOString()});
+  toast('✅ تم');closeModal('yearModal');await loadAll();
+};
+window.activateYear=async(id)=>{
+  for(const y of years){await updateDoc(doc(db,'fin_years',y.id),{active:y.id===id});}
+  toast('✅ تم التفعيل');await loadAll();
+};
+window.delYear=async(id)=>{if(!confirm('حذف السنة؟'))return;await deleteDoc(doc(db,'fin_years',id));toast('🗑 تم');await loadAll();};
+
+// ACCOUNTS
+function renderAccounts(){
+  const types={'asset':'الأصول','liability':'الخصوم','equity':'حقوق الملكية','revenue':'الإيرادات','expense':'المصروفات','purchase':'المشتريات'};
+  const roots=accounts.filter(a=>!a.parent);
+  const children=accounts.filter(a=>a.parent);
+  let html='';
+  const typeGroups={};
+  roots.forEach(a=>{
+    const key=a.type||'asset';
+    if(!typeGroups[key])typeGroups[key]=[];
+    typeGroups[key].push(a);
+  });
+  Object.entries(typeGroups).forEach(([type,accs])=>{
+    html+=`<div style="margin-bottom:1rem"><div style="background:var(--black);color:white;padding:8px 14px;font-weight:800;font-size:.85rem;letter-spacing:2px;text-transform:uppercase">${types[type]||type}</div>`;
+    accs.forEach(a=>{
+      const kids=children.filter(c=>c.parent===a.id);
+      html+=`<div style="border:2px solid #000;margin-top:2px"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:white;cursor:pointer" onclick="this.nextElementSibling.classList.toggle('open')">
+        <span><strong>${a.code||''}</strong> ${a.name}</span>
+        <div><button class="action-btn danger" onclick="event.stopPropagation();delAcc('${a.id}')">حذف</button></div>
+      </div>
+      <div style="padding:0 1rem;display:none" id="kids-${a.id}">`;
+      kids.forEach(k=>{html+=`<div style="display:flex;justify-content:space-between;padding:8px 12px;border:1px solid #ddd;margin:4px 0;background:#fafafa"><span>${k.code||''} ${k.name}</span><button class="action-btn danger" onclick="delAcc('${k.id}')">حذف</button></div>`;});
+      html+=`</div></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('accountTree').innerHTML=html||'<div class="brut-card" style="text-align:center;color:#666">لا توجد حسابات. ابدأ بإضافة حسابات رئيسية.</div>';
+}
+window.saveAccount=async()=>{
+  const name=document.getElementById('acName').value;if(!name)return;
+  await addDoc(collection(db,'accounts'),{name,code:document.getElementById('acCode').value,type:document.getElementById('acType').value,parent:document.getElementById('acParent').value||null,createdAt:new Date().toISOString()});
+  toast('✅ تم');closeModal('accModal');await loadAll();
+};
+window.delAcc=async(id)=>{if(!confirm('حذف الحساب؟'))return;await deleteDoc(doc(db,'accounts',id));toast('🗑 تم');await loadAll();};
+
+// JOURNAL
+function renderJournal(list){
+  list=list||journals;
+  const tb=document.getElementById('journalBody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem">لا توجد قيود</td></tr>';return;}
+  tb.innerHTML=list.map(j=>`<tr><td><strong>${j.number||''}</strong></td><td>${j.date||''}</td><td>${j.description||''}</td><td>${j.debit||''}</td><td>${j.credit||''}</td><td>${fmt(j.amount)}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${j.notes||''}</td><td><button class="action-btn danger" onclick="delJournal('${j.id}')">حذف</button></td></tr>`).join('');
+}
+window.filterJournal=()=>{
+  const from=document.getElementById('jFilterFrom').value;
+  const to=document.getElementById('jFilterTo').value;
+  const acc=document.getElementById('jFilterAcc').value;
+  const q=document.getElementById('jSearch').value.toLowerCase();
+  renderJournal(journals.filter(j=>{
+    if(from&&j.date<from)return false;
+    if(to&&j.date>to)return false;
+    if(acc&&j.debit!==acc&&j.credit!==acc)return false;
+    if(q&&!(j.description||'').toLowerCase().includes(q)&&!(j.number||'').toString().includes(q))return false;
+    return true;
+  }));
+};
+window.saveJournal=async()=>{
+  const desc=document.getElementById('jDesc').value;const amount=parseFloat(document.getElementById('jAmount').value);
+  if(!desc||!amount)return;
+  const num=(journals.length?Math.max(...journals.map(j=>j.number||0))+1:1);
+  await addDoc(collection(db,'journals'),{number:num,date:document.getElementById('jDate').value,description:desc,debit:document.getElementById('jDebit').value,credit:document.getElementById('jCredit').value,amount,notes:document.getElementById('jNotes').value,createdAt:new Date().toISOString()});
+  toast('✅ تم');closeModal('journalModal');await loadAll();
+};
+window.delJournal=async(id)=>{if(!confirm('حذف القيد؟'))return;await deleteDoc(doc(db,'journals',id));toast('🗑 تم');await loadAll();};
+
+// DOCS
+const docTitles={invoice:'فاتورة',receipt:'سند قبض',payment:'سند صرف',quotation:'عرض سعر'};
+const docCollections={invoice:'invoices',receipt:'receipts',payment:'payments',quotation:'quotations'};
+window.openDocModal=(type)=>{
+  document.getElementById('docType').value=type;
+  document.getElementById('docId').value='';
+  document.getElementById('docModalTitle').textContent=docTitles[type]+' جديد';
+  document.getElementById('docDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('docPartyLabel').textContent=type==='payment'?'المدفوع له':'اسم العميل';
+  document.getElementById('docItemsSection').style.display=(type==='invoice'||type==='quotation')?'block':'none';
+  document.getElementById('docPaySection').style.display=(type==='receipt'||type==='payment')?'block':'none';
+  document.getElementById('docQuoteSection').style.display=(type==='quotation')?'block':'none';
+  document.getElementById('docAmount').value='';
+  document.getElementById('docParty').value='';
+  document.getElementById('docDesc').value='';
+  document.getElementById('docNet').value='';
+  document.getElementById('docDiscount').value='';
+  document.getElementById('docVat').value='';
+  docItems=[];renderDocItems();
+  // Auto number
+  const colData={invoice:invoices,receipt:receipts,payment:payments,quotation:quotations}[type];
+  const yr=new Date().getFullYear();const mon=String(new Date().getMonth()+1).padStart(2,'0');
+  const seq=colData.length+1;
+  document.getElementById('docNum').value=`TAJ/${String(seq).padStart(2,'0')}/${yr}`;
+  openModal('docModal');
+};
+function renderDocItems(){
+  const tb=document.getElementById('docItemsBody');
+  if(!docItems.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999;padding:8px">لا توجد بنود</td></tr>';return;}
+  tb.innerHTML=docItems.map((it,i)=>`<tr>
+    <td><input value="${it.desc||''}" oninput="docItems[${i}].desc=this.value" style="border:1px solid #ccc;padding:4px 6px;width:100%;font-family:var(--font)"></td>
+    <td><input type="number" value="${it.qty||1}" oninput="docItems[${i}].qty=parseFloat(this.value)||0;calcDocTotals()" style="border:1px solid #ccc;padding:4px 6px;width:80px;font-family:var(--font)"></td>
+    <td><input type="number" value="${it.price||0}" oninput="docItems[${i}].price=parseFloat(this.value)||0;calcDocTotals()" style="border:1px solid #ccc;padding:4px 6px;width:80px;font-family:var(--font)"></td>
+    <td>${fmt((it.qty||1)*(it.price||0))}</td>
+    <td><button onclick="docItems.splice(${i},1);renderDocItems();calcDocTotals()" style="background:var(--red);color:white;border:none;width:24px;height:24px;cursor:pointer;font-weight:800">✕</button></td>
+  </tr>`).join('');
+}
+window.addDocItem=()=>{docItems.push({desc:'',qty:1,price:0});renderDocItems();}
+window.calcDocTotals=()=>{
+  const total=docItems.reduce((s,it)=>s+(it.qty||1)*(it.price||0),0);
+  const disc=parseFloat(document.getElementById('docDiscount').value)||0;
+  const vat=parseFloat(document.getElementById('docVat').value)||0;
+  const net=total*(1-disc/100)*(1+vat/100);
+  document.getElementById('docAmount').value=fmt(total);
+  document.getElementById('docNet').value=fmt(net);
+};
+window.saveDoc=async()=>{
+  const type=document.getElementById('docType').value;
+  const party=document.getElementById('docParty').value;if(!party)return;
+  const data={number:document.getElementById('docNum').value,date:document.getElementById('docDate').value,party,amount:parseFloat(document.getElementById('docAmount').value)||0,description:document.getElementById('docDesc').value,createdAt:new Date().toISOString()};
+  if(type==='invoice'||type==='quotation'){
+    data.items=docItems;data.discount=parseFloat(document.getElementById('docDiscount').value)||0;data.vat=parseFloat(document.getElementById('docVat').value)||0;data.net=parseFloat(document.getElementById('docNet').value)||data.amount;
+  }
+  if(type==='quotation'){data.installments=document.getElementById('docInstallments').value;data.duration=document.getElementById('docDuration').value;data.workDetails=document.getElementById('docWorkDetails').value;}
+  if(type==='receipt'||type==='payment'){
+    data.payMethod=document.querySelector('input[name="payMethod"]:checked')?.value||'';
+    data.refInvoice=document.getElementById('docRefInv').value;data.remaining=parseFloat(document.getElementById('docRemaining').value)||0;
+  }
+  try{
+    await addDoc(collection(db,docCollections[type]),data);
+    toast('✅ تم الحفظ');closeModal('docModal');await loadAll();
+  }catch(e){toast('❌ خطأ: '+e.message);}
+};
+window.printDoc=()=>{
+  const type=document.getElementById('docType').value;
+  const num=document.getElementById('docNum').value;
+  const date=document.getElementById('docDate').value;
+  const party=document.getElementById('docParty').value;
+  const amount=document.getElementById('docAmount').value;
+  const net=document.getElementById('docNet').value||amount;
+  const desc=document.getElementById('docDesc').value;
+  let content='';
+  if(type==='invoice'){
+    const rows=docItems.map((it,i)=>`<tr><td>${i+1}</td><td>${it.desc||''}</td><td></td><td>${it.qty||1}</td><td>${fmt(it.price||0)}</td><td>${fmt((it.qty||1)*(it.price||0))}</td><td></td></tr>`).join('');
+    const disc=document.getElementById('docDiscount').value;const vat=document.getElementById('docVat').value;
+    content=`<div class="doc-preview"><div class="doc-header"><div><div class="doc-logo">تاج الإبداع</div><div style="font-size:.8rem;color:#666;margin-top:4px">شركة التصميم المعماري</div></div><div style="text-align:left"><div style="font-size:.85rem">رقم الفاتورة: <strong>${num}</strong></div><div style="font-size:.85rem">التاريخ: <strong>${date}</strong></div></div></div>
+    <div class="doc-title">فاتورة — INVOICE</div>
+    <div class="doc-meta"><div class="doc-meta-item"><span class="doc-meta-label">الفاضل:</span><span>${party}</span></div><div class="doc-meta-item"><span class="doc-meta-label">التاريخ:</span><span>${date}</span></div></div>
+    <table class="brut-table doc-table" style="width:100%"><thead><tr><th>م</th><th>البيان</th><th>الضمان</th><th>الأمتار</th><th>القيمة</th><th>الإجمالي</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>
+    <div style="margin-right:auto;width:250px;margin-top:1rem">
+      <div class="doc-total-row"><span>الإجمالي</span><span>${amount} ر.ع</span></div>
+      <div class="doc-total-row"><span>خصم ${disc}%</span><span>—</span></div>
+      <div class="doc-total-row"><span>ضريبة VAT ${vat}%</span><span>—</span></div>
+      <div class="doc-total-row final"><span>الصافي</span><span>${net} ر.ع</span></div>
+    </div>
+    <div class="doc-footer"><div class="doc-sign"><div class="line"></div><span>التوقيع</span></div><div class="doc-sign"><div class="line"></div><span>الختم</span></div></div></div>`;
+  } else if(type==='receipt'||type==='payment'){
+    const title=type==='receipt'?'سند قبض — Receipt Voucher':'سند صرف — Payment Voucher';
+    const action=type==='receipt'?'استلمنا من الفاضل:':'اصرفوا للفاضل:';
+    const pm=document.querySelector('input[name="payMethod"]:checked')?.value||'نقداً';
+    const refInv=document.getElementById('docRefInv').value;const rem=document.getElementById('docRemaining').value;
+    content=`<div class="doc-preview"><div class="doc-header"><div><div class="doc-logo">تاج الإبداع</div></div><div style="text-align:left"><div style="font-size:.85rem">الرقم: <strong>${num}</strong></div></div></div>
+    <div class="doc-title">${title}</div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:.8rem;display:flex;justify-content:space-between"><span>ر.ع</span><span><strong>${amount}</strong></span><span>r.o</span></div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:.8rem;display:flex;justify-content:space-between"><span>التاريخ:</span><span>${date}</span></div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:.8rem"><span>${action} </span><strong>${party}</strong><span style="margin-right:2rem">:Pay to the master</span></div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:.8rem"><span>مبلغ وقدره: </span><strong>${amount} ر.ع</strong><span style="margin-right:2rem">:Amount of</span></div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:.8rem;display:flex;gap:2rem">
+      <label><input type="checkbox" ${pm==='نقداً'?'checked':''}> نقداً</label>
+      <label><input type="checkbox" ${pm==='شيك'?'checked':''}> شيك</label>
+      <label><input type="checkbox" ${pm==='تحويل'?'checked':''}> تحويل</label>
+      <span>رقم: (${num})</span><span>التاريخ: ${date}</span>
+    </div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:.8rem"><span>وذلك بمقابل: </span>${desc}</div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-bottom:1rem;display:flex;justify-content:space-between"><span>المتبقي: ${rem} &nbsp;&nbsp; من فاتورة: ${refInv}</span><span>توقيع المستلم: ___________&nbsp;&nbsp;&nbsp;&nbsp; توقيع المدير: ___________</span></div>
+    </div>`;
+  } else if(type==='quotation'){
+    const dur=document.getElementById('docDuration').value;const inst=document.getElementById('docInstallments').value;const wd=document.getElementById('docWorkDetails').value;
+    const rows=docItems.map((it,i)=>`<tr><td>${i+1}</td><td>${it.desc||''}</td><td></td><td></td><td>${fmt((it.qty||1)*(it.price||0))}</td></tr>`).join('');
+    content=`<div class="doc-preview"><div class="doc-header"><div><div class="doc-logo">تاج الإبداع</div></div><div><strong>رقم: ${num}</strong></div></div>
+    <div class="doc-title">عرض سعر — Quotation</div>
+    <div class="doc-meta"><div class="doc-meta-item"><span class="doc-meta-label">الفاضل:</span><span>${party}</span></div><div class="doc-meta-item"><span class="doc-meta-label">التاريخ:</span><span>${date}</span></div></div>
+    <table class="brut-table doc-table" style="width:100%"><thead><tr><th>م</th><th>البيان</th><th>الضمان</th><th>التفاصيل</th><th>التكلفة</th></tr></thead><tbody>${rows}</tbody></table>
+    <div style="margin-right:auto;width:250px;margin-top:1rem">
+      <div class="doc-total-row"><span>الإجمالي</span><span>${amount} ر.ع</span></div>
+      <div class="doc-total-row final"><span>الصافي</span><span>${net} ر.ع</span></div>
+    </div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem"><div>الدفعات: ${inst}</div><div>المدة: ${dur} يوم</div></div>
+    <div style="border:2px solid #000;padding:8px 12px;margin-top:.5rem"><strong>تفاصيل العمل:</strong> ${wd}</div>
+    <div class="doc-footer"><div class="doc-sign"><div class="line"></div><span>التوقيع</span></div><div class="doc-sign"><div class="line"></div><span>الختم</span></div></div></div>`;
+  }
+  document.getElementById('printContent').innerHTML=content;openModal('printOverlay');
+};
+
+function renderInvoices(){const tb=document.getElementById('invoicesBody');if(!invoices.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem">لا توجد فواتير</td></tr>';return;}tb.innerHTML=invoices.map(i=>`<tr><td><strong>${i.number}</strong></td><td>${i.date||''}</td><td>${i.party||''}</td><td>${fmt(i.amount)}</td><td>${fmt(i.net||i.amount)}</td><td><button class="action-btn" onclick='viewDoc("invoice",${JSON.stringify(i)})'>عرض</button><button class="action-btn danger" onclick="delDoc('invoices','${i.id}')">حذف</button></td></tr>`).join('');}
+function renderReceipts(){const tb=document.getElementById('receiptsBody');if(!receipts.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem">لا توجد سندات</td></tr>';return;}tb.innerHTML=receipts.map(r=>`<tr><td><strong>${r.number}</strong></td><td>${r.date||''}</td><td>${r.party||''}</td><td>${fmt(r.amount)}</td><td>${r.payMethod||''}</td><td><button class="action-btn danger" onclick="delDoc('receipts','${r.id}')">حذف</button></td></tr>`).join('');}
+function renderPayments(){const tb=document.getElementById('paymentsBody');if(!payments.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem">لا توجد سندات</td></tr>';return;}tb.innerHTML=payments.map(p=>`<tr><td><strong>${p.number}</strong></td><td>${p.date||''}</td><td>${p.party||''}</td><td>${fmt(p.amount)}</td><td>${p.payMethod||''}</td><td><button class="action-btn danger" onclick="delDoc('payments','${p.id}')">حذف</button></td></tr>`).join('');}
+function renderQuotations(){const tb=document.getElementById('quotationsBody');if(!quotations.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem">لا توجد عروض</td></tr>';return;}tb.innerHTML=quotations.map(q=>`<tr><td><strong>${q.number}</strong></td><td>${q.date||''}</td><td>${q.party||''}</td><td>${fmt(q.amount)}</td><td>${fmt(q.net||q.amount)}</td><td>${q.duration||''}</td><td><button class="action-btn danger" onclick="delDoc('quotations','${q.id}')">حذف</button></td></tr>`).join('');}
+window.delDoc=async(col,id)=>{if(!confirm('حذف؟'))return;await deleteDoc(doc(db,col,id));toast('🗑 تم');await loadAll();}
+
+// REPORTS
+window.showReport=(type)=>{
+  const rc=document.getElementById('reportContent');
+  if(type==='journal-report'){
+    rc.innerHTML=`<div class="brut-section-title" style="margin-bottom:1rem">تقرير القيود اليومية</div><div class="table-wrap"><table class="brut-table"><thead><tr><th>رقم القيد</th><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>المبلغ</th></tr></thead><tbody>${journals.map(j=>`<tr><td>${j.number}</td><td>${j.date}</td><td>${j.description}</td><td>${j.debit}</td><td>${j.credit}</td><td>${fmt(j.amount)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center">لا توجد قيود</td></tr>'}</tbody></table></div>`;
+  } else if(type==='trial-balance'){
+    const accMap={};accounts.forEach(a=>{accMap[a.name]={debit:0,credit:0};});
+    journals.forEach(j=>{if(accMap[j.debit])accMap[j.debit].debit+=parseFloat(j.amount)||0;if(accMap[j.credit])accMap[j.credit].credit+=parseFloat(j.amount)||0;});
+    const rows=Object.entries(accMap).filter(([,v])=>v.debit||v.credit).map(([name,v])=>`<tr><td>${name}</td><td>${fmt(v.debit)}</td><td>${fmt(v.credit)}</td><td style="color:${v.debit>v.credit?'green':'var(--red)'}">${fmt(Math.abs(v.debit-v.credit))}</td></tr>`).join('');
+    rc.innerHTML=`<div class="brut-section-title" style="margin-bottom:1rem">ميزان المراجعة</div><div class="table-wrap"><table class="brut-table"><thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>${rows||'<tr><td colspan="4" style="text-align:center">لا توجد بيانات</td></tr>'}</tbody></table></div>`;
+  } else if(type==='pnl'){
+    const rev=invoices.reduce((s,i)=>s+parseFloat(i.net||0),0);
+    const exp=payments.reduce((s,p)=>s+parseFloat(p.amount||0),0);
+    rc.innerHTML=`<div class="brut-section-title" style="margin-bottom:1rem">قائمة الأرباح والخسائر</div><div class="brut-card"><div class="doc-total-row"><span>إجمالي الإيرادات</span><span style="color:green">${fmt(rev)} ر.ع</span></div><div class="doc-total-row"><span>إجمالي المصروفات</span><span style="color:var(--red)">${fmt(exp)} ر.ع</span></div><div class="doc-total-row final"><span>${rev-exp>=0?'صافي الربح':'صافي الخسارة'}</span><span>${fmt(Math.abs(rev-exp))} ر.ع</span></div></div>`;
+  }
+};
+
+await loadAll();
+</script>
+</body>
+</html>
