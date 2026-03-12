@@ -1,6 +1,6 @@
 # 🌟 Taj Al-Ibda Creative Company Website
 
-![Taj AlIbdaa Logo](.mian/logo2.png)
+![Taj AlIbdaa Logo](https://github.com/Taj-Alibdaa/website/blob/f7aeb87cf27b83b826705921914d8ff5795da3d4/logo.png)
 
 Official responsive website for **Taj Al-Ibda**, a leading **interior and exterior design company**.
 Modern minimalist design with smooth animations and fully responsive layout.
