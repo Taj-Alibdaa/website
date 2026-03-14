@@ -124,12 +124,15 @@ window.setMain=(url,el)=>{
   el.classList.add('active-t');
 };
 
-// helper: convert drive share link → direct image URL
+// helper: convert drive share link → direct image URL (leaves other URLs untouched)
 function driveImageUrl(url){
   if(!url) return '';
+  // already a direct uc?export=view link
   if(url.includes('uc?export=view')) return url;
-  const m=url.match(/\/file\/d\/([^/]+)/);
+  // Google Drive file/d/FILE_ID/view  →  uc?export=view&id=FILE_ID
+  const m=url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
   if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  // Firebase Storage or any other direct URL — return as-is
   return url;
 }
 
@@ -167,6 +170,7 @@ try{
   const [ps,cs]=await Promise.all([getDocs(collection(db,'projects')),getDocs(collection(db,'categories'))]);
   const projects=ps.docs.map(d=>({id:d.id,...d.data()}));
   const cats=cs.docs.map(d=>d.data().name).filter(Boolean);
+  console.log('projects loaded:', projects.length, 'cats:', cats.length);
   const fc=document.getElementById('filterChips');
   fc.innerHTML=`<button class="chip active" data-cat="all" onclick="filterCat('all')">${lang==='ar'?'الكل':'All'}</button>`;
   cats.forEach(cat=>{
@@ -198,7 +202,11 @@ try{
       grid.appendChild(div);
     });
   }
-}catch(e){ console.error(e); }
+}catch(e){
+  console.error('projects load error:', e);
+  const grid=document.getElementById('galleryGrid');
+  if(grid) grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#981B1E">خطأ في تحميل المشاريع: ${e.message}</div>`;
+}
 applyLang();
 const obs=new IntersectionObserver(entries=>entries.forEach(x=>{if(x.isIntersecting)x.target.style.animationPlayState='running'}),{threshold:.1});
 document.querySelectorAll('.anim-up').forEach(el=>{ el.style.animationPlayState='paused'; obs.observe(el); });
