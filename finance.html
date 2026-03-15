@@ -840,12 +840,22 @@ function buildDocHTML(type,d){
   const sigHtml  = sigUrl  ? `<img src="${sigUrl}"  style="max-height:60px;display:block;margin:0 auto 4px;object-fit:contain" alt="توقيع">` : '';
   const stmpHtml = stmpUrl ? `<img src="${stmpUrl}" style="max-height:60px;display:block;margin:0 auto 4px;object-fit:contain" alt="ختم">` : '';
 
-  h+=`<div class="signatures" style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:2.5rem;gap:2rem">
-    <div class="stamp" style="text-align:center;min-width:120px">
-      ${stmpUrl ? `<img id="stamp" src="${stmpUrl}" style="max-height:80px;max-width:120px;object-fit:contain;display:block;margin:0 auto" alt="ختم">` : '<div style="height:80px"></div>'}
+  h+=`<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:2.5rem;gap:2rem;padding:0 4px">
+    <div style="text-align:center;min-width:130px">
+      <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:6px;letter-spacing:.5px">الختم</div>
+      <div style="min-height:70px;display:flex;align-items:flex-end;justify-content:center">
+        ${stmpUrl
+          ? `<img src="${stmpUrl}" style="max-height:70px;max-width:120px;object-fit:contain;display:block" alt="ختم">`
+          : `<div style="height:70px;width:100px;border-bottom:1.5px solid #555"></div>`}
+      </div>
     </div>
-    <div class="signature" style="text-align:center;min-width:120px">
-      ${sigUrl ? `<img id="signature" src="${sigUrl}" style="max-height:80px;max-width:120px;object-fit:contain;display:block;margin:0 auto" alt="توقيع">` : '<div style="height:80px"></div>'}
+    <div style="text-align:center;min-width:130px">
+      <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:6px;letter-spacing:.5px">التوقيع</div>
+      <div style="min-height:70px;display:flex;align-items:flex-end;justify-content:center">
+        ${sigUrl
+          ? `<img src="${sigUrl}" style="max-height:70px;max-width:120px;object-fit:contain;display:block" alt="توقيع">`
+          : `<div style="height:70px;width:100px;border-bottom:1.5px solid #555"></div>`}
+      </div>
     </div>
   </div></div>`;
   return h;
