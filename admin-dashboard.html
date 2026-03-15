@@ -461,6 +461,7 @@ window.saveProject=async()=>{
   const pdfUrl=document.getElementById('pPdfUrl').value.trim()||null;
   const data={
     name,
+    title:name,  // alias so projects.html can read either field
     category:document.getElementById('pCat').value,
     location:document.getElementById('pLoc').value,
     description:document.getElementById('pDesc').value,
