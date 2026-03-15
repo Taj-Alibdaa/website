@@ -23,6 +23,26 @@ body{background:var(--gray-light)}
 .proj-img-thumb .del-btn{position:absolute;top:-5px;right:-5px;background:var(--red);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:0.65rem;cursor:pointer;display:none;align-items:center;justify-content:center;font-weight:800}
 .proj-img-thumb:hover .del-btn{display:flex}
 .cover-badge{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.6rem;text-align:center;padding:2px;font-weight:700}
+
+/* ── Cloudinary upload button ───────────────────── */
+.cld-upload-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--red);color:white;border:none;
+  padding:8px 16px;border-radius:var(--radius);
+  font-family:var(--font);font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:var(--transition);margin-top:6px;
+}
+.cld-upload-btn:hover{background:var(--red-dark);transform:translateY(-1px)}
+.cld-upload-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.cld-progress{
+  height:4px;border-radius:2px;background:var(--gray-border);
+  margin-top:6px;overflow:hidden;display:none;
+}
+.cld-progress-bar{
+  height:100%;background:var(--red);
+  border-radius:2px;width:0%;
+  transition:width .3s ease;
+}
 @media(max-width:900px){.admin-wrap{grid-template-columns:1fr}.sidebar{position:static;height:auto}.stats-row{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.stats-row{grid-template-columns:1fr}}
 </style>
@@ -97,12 +117,13 @@ body{background:var(--gray-light)}
         <h3 style="font-weight:800;margin-bottom:1.2rem;color:var(--red)">🖼️ صورة الـ Hero</h3>
         <div class="form-group"><label class="form-label">رابط الصورة (URL)</label><input class="form-input" id="cmsHeroImgUrl" placeholder="https://..." oninput="previewHeroImg()"></div>
         <img id="heroImgPreview" class="hero-img-preview" style="display:none">
-        <div style="margin-top:0.8rem"><label class="form-label">أو رفع صورة</label>
-          <div class="upload-area" onclick="document.getElementById('heroImgFile').click()">
-            <input type="file" id="heroImgFile" accept="image/*" onchange="handleHeroImgFile(event)">
-            <div style="font-size:1.5rem;margin-bottom:6px">📷</div><div style="font-size:0.85rem;color:var(--gray-mid)">اضغط لاختيار صورة</div>
-          </div>
-          <img id="heroImgFilePreview" class="hero-img-preview" style="display:none;margin-top:8px">
+        <div style="margin-top:0.8rem"><label class="form-label">أو رفع صورة مباشرةً إلى Cloudinary</label>
+          <input type="file" id="heroImgFile" accept="image/*" style="display:none" onchange="uploadToCloudinary(event,'cmsHeroImgUrl','heroImgProgress','heroImgPreview')">
+          <br>
+          <button type="button" class="cld-upload-btn" onclick="document.getElementById('heroImgFile').click()">
+            ☁️ رفع صورة الهيرو
+          </button>
+          <div class="cld-progress" id="heroImgProgress"><div class="cld-progress-bar" id="heroImgProgressBar"></div></div>
         </div>
       </div>
       <div class="card card-accent" style="margin-bottom:1.2rem">
@@ -129,6 +150,9 @@ body{background:var(--gray-light)}
         <div class="form-group">
           <label class="form-label">رابط التوقيع (URL)</label>
           <input class="form-input" id="cmsStampSigUrl" placeholder="https://i.imgur.com/xxxxx.png" oninput="previewStampUrl('cmsStampSigUrl','stampSigPreview')">
+          <input type="file" id="sigFile" accept="image/*" style="display:none" onchange="uploadToCloudinary(event,'cmsStampSigUrl','sigProgress',null,()=>previewStampUrl('cmsStampSigUrl','stampSigPreview'))">
+          <button type="button" class="cld-upload-btn" onclick="document.getElementById('sigFile').click()">☁️ رفع التوقيع</button>
+          <div class="cld-progress" id="sigProgress"><div class="cld-progress-bar" id="sigProgressBar"></div></div>
           <div id="stampSigPreview" style="margin-top:8px;display:none">
             <img id="stampSigImg" style="max-height:80px;border:1px solid #e8e8e8;border-radius:6px;background:#fff;padding:4px" alt="معاينة التوقيع">
             <p id="stampSigPdfNote" style="font-size:.78rem;color:#666;margin-top:4px;display:none">📄 تم اكتشاف رابط PDF — سيُعرض في المستند.</p>
@@ -137,6 +161,9 @@ body{background:var(--gray-light)}
         <div class="form-group">
           <label class="form-label">رابط الختم (URL)</label>
           <input class="form-input" id="cmsStampStampUrl" placeholder="https://i.imgur.com/yyyyy.png" oninput="previewStampUrl('cmsStampStampUrl','stampStampPreview')">
+          <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="uploadToCloudinary(event,'cmsStampStampUrl','stampProgress',null,()=>previewStampUrl('cmsStampStampUrl','stampStampPreview'))">
+          <button type="button" class="cld-upload-btn" onclick="document.getElementById('stampFile').click()">☁️ رفع الختم</button>
+          <div class="cld-progress" id="stampProgress"><div class="cld-progress-bar" id="stampProgressBar"></div></div>
           <div id="stampStampPreview" style="margin-top:8px;display:none">
             <img id="stampStampImg" style="max-height:80px;border:1px solid #e8e8e8;border-radius:6px;background:#fff;padding:4px" alt="معاينة الختم">
             <p id="stampStampPdfNote" style="font-size:.78rem;color:#666;margin-top:4px;display:none">📄 تم اكتشاف رابط PDF — سيُعرض في المستند.</p>
@@ -209,9 +236,11 @@ body{background:var(--gray-light)}
   <div class="form-group"><label class="form-label">الوصف</label><textarea class="form-input" id="pDesc" rows="2"></textarea></div>
   <hr style="border:none;border-top:1px solid var(--gray-border);margin:1rem 0">
   <div class="form-group">
-    <label class="form-label">🖼️ رابط صورة الغلاف (Google Drive)</label>
-    <input class="form-input" id="pCoverUrl" placeholder="https://drive.google.com/file/d/.../view">
-    <div style="font-size:0.78rem;color:var(--gray-mid);margin-top:4px">📌 ارفع الصورة على Drive واضغط مشاركة ← انسخ الرابط هنا</div>
+    <label class="form-label">🖼️ صورة الغلاف</label>
+    <input class="form-input" id="pCoverUrl" placeholder="https://... أو ارفع الصورة بالزر أدناه">
+    <input type="file" id="pCoverFile" accept="image/*" style="display:none" onchange="uploadToCloudinary(event,'pCoverUrl','pCoverProgress','pCoverPreview')">
+    <button type="button" class="cld-upload-btn" onclick="document.getElementById('pCoverFile').click()">☁️ رفع الصورة إلى Cloudinary</button>
+    <div class="cld-progress" id="pCoverProgress"><div class="cld-progress-bar" id="pCoverProgressBar"></div></div>
     <img id="pCoverPreview" style="width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-border);margin-top:8px;display:none">
   </div>
   <div class="form-group">
@@ -514,7 +543,7 @@ window.delWorker=async(id)=>{if(!confirm('حذف المنفذ؟'))return;await d
 
 // CMS
 let heroImgDataUrl=null;
-window.handleHeroImgFile=(e)=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{heroImgDataUrl=ev.target.result;document.getElementById('heroImgFilePreview').src=heroImgDataUrl;document.getElementById('heroImgFilePreview').style.display='block';};r.readAsDataURL(file);};
+// handleHeroImgFile replaced by uploadToCloudinary
 // STAMP PREVIEW
 window.previewStampUrl=(inputId, previewId)=>{
   const url=(document.getElementById(inputId)||{}).value||'';
@@ -587,6 +616,93 @@ window.printTable=(type)=>{
 };
 
 await loadAll();
+
+// ══════════════════════════════════════════════════════
+//  CLOUDINARY UPLOAD
+//  Cloud Name : Taj-Alibdaa
+//  Preset     : taj-alibdaa
+// ══════════════════════════════════════════════════════
+window.uploadToCloudinary = async function(event, targetInputId, progressId, previewId, onDone) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const btn = event.target.previousElementSibling;  // the upload button
+  const progressWrap = document.getElementById(progressId);
+  const progressBar  = progressWrap?.querySelector('.cld-progress-bar');
+
+  // Show progress bar
+  if (progressWrap) progressWrap.style.display = 'block';
+  if (progressBar)  progressBar.style.width = '0%';
+  if (btn) btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'taj-alibdaa');
+  formData.append('folder', 'taj-alibdaa');
+
+  try {
+    // Use XHR for progress events
+    const url = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://api.cloudinary.com/v1_1/Taj-Alibdaa/image/upload');
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && progressBar) {
+          progressBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          resolve(data.secure_url);
+        } else {
+          reject(new Error('Upload failed: ' + xhr.status));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.send(formData);
+    });
+
+    // Set the URL in the target input
+    const input = document.getElementById(targetInputId);
+    if (input) {
+      input.value = url;
+      input.dispatchEvent(new Event('input'));  // trigger any preview listeners
+    }
+
+    // Show image preview if provided
+    if (previewId) {
+      const preview = document.getElementById(previewId);
+      if (preview) {
+        preview.src = url;
+        preview.style.display = 'block';
+      }
+    }
+
+    // Run callback if provided (e.g. previewStampUrl)
+    if (typeof onDone === 'function') onDone();
+
+    if (progressBar) progressBar.style.width = '100%';
+    toast('✅ تم الرفع بنجاح!');
+
+    // Hide progress after 1.5s
+    setTimeout(() => {
+      if (progressWrap) progressWrap.style.display = 'none';
+    }, 1500);
+
+  } catch(err) {
+    console.error('Cloudinary error:', err);
+    toast('❌ فشل الرفع: ' + err.message, 'err');
+    if (progressWrap) progressWrap.style.display = 'none';
+  } finally {
+    if (btn) btn.disabled = false;
+    // Reset file input so same file can be re-selected
+    event.target.value = '';
+  }
+};
+
 </script>
 </body>
 </html>
