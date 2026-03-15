@@ -244,9 +244,19 @@ body{background:var(--gray-light)}
     <img id="pCoverPreview" style="width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-border);margin-top:8px;display:none">
   </div>
   <div class="form-group">
-    <label class="form-label">📄 رابط ملف PDF للمشروع (Google Drive Preview)</label>
-    <input class="form-input" id="pPdfUrl" placeholder="https://drive.google.com/file/d/.../view">
-    <div style="font-size:0.78rem;color:var(--gray-mid);margin-top:4px">📌 ارفع ملف PDF على Drive ← مشاركة ← انسخ الرابط — سيظهر كمعاينة داخل صفحة المشروع</div>
+    <label class="form-label">🖼️ صور إضافية للمشروع</label>
+    <div style="font-size:0.78rem;color:var(--gray-mid);margin-bottom:8px">ارفع صور متعددة — ستظهر في معرض المشروع</div>
+    <input type="file" id="pImagesFile" accept="image/*" multiple style="display:none" onchange="uploadProjectImages(event)">
+    <button type="button" class="cld-upload-btn" onclick="document.getElementById('pImagesFile').click()">☁️ رفع صور المشروع</button>
+    <div class="cld-progress" id="pImagesProgress"><div class="cld-progress-bar" id="pImagesProgressBar"></div></div>
+    <div class="proj-imgs-wrap" id="pImagesWrap" style="margin-top:10px"></div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">📄 رفع PDF للمشروع</label>
+    <input type="file" id="pPdfFile" accept="application/pdf" style="display:none" onchange="uploadPdfToCloudinary(event)">
+    <input class="form-input" id="pPdfUrl" placeholder="https://... أو ارفع الملف بالزر">
+    <button type="button" class="cld-upload-btn" style="background:#2563eb" onclick="document.getElementById('pPdfFile').click()">📄 رفع PDF</button>
+    <div class="cld-progress" id="pPdfProgress"><div class="cld-progress-bar" id="pPdfProgressBar"></div></div>
   </div>
   <div style="display:flex;gap:0.8rem;justify-content:flex-end;margin-top:1.2rem">
     <button class="btn btn-ghost btn-sm" onclick="closeModal('projModal')">إلغاء</button>
@@ -456,6 +466,8 @@ window.openProjModal=()=>{
   document.getElementById('pCoverUrl').value='';
   document.getElementById('pPdfUrl').value='';
   document.getElementById('pCoverPreview').style.display='none';
+  window._projImages = [];
+  renderProjImages();
   document.getElementById('projModalTitle').textContent='إضافة مشروع';
   openModal('projModal');
 };
@@ -470,6 +482,9 @@ window.editProject=(p)=>{
   const imgUrl=driveImageUrl(p.coverUrl);
   if(imgUrl){document.getElementById('pCoverPreview').src=imgUrl;document.getElementById('pCoverPreview').style.display='block';}
   else document.getElementById('pCoverPreview').style.display='none';
+  // Load existing project images
+  window._projImages = Array.isArray(p.images) ? [...p.images] : [];
+  renderProjImages();
   document.getElementById('projModalTitle').textContent='تعديل المشروع';
   openModal('projModal');
 };
@@ -498,7 +513,7 @@ window.saveProject=async()=>{
     imageUrl:driveImageUrl(coverUrl)||null,
     pdfUrl:pdfUrl||null,
     pdfEmbed:drivePdfEmbed(pdfUrl)||null,
-    images:[],
+    images:window._projImages||[],
     updatedAt:new Date().toISOString()
   };
   try{if(id)await updateDoc(doc(db,'projects',id),data);else await addDoc(collection(db,'projects'),{...data,createdAt:new Date().toISOString()});toast('✅ تم');closeModal('projModal');await loadAll();}catch(e){toast('❌ خطأ','err');}
@@ -699,6 +714,107 @@ window.uploadToCloudinary = async function(event, targetInputId, progressId, pre
   } finally {
     if (btn) btn.disabled = false;
     // Reset file input so same file can be re-selected
+    event.target.value = '';
+  }
+};
+
+
+// ══════════════════════════════════════════════════════
+//  PROJECT MULTI-IMAGE & PDF UPLOAD
+// ══════════════════════════════════════════════════════
+window._projImages = [];
+
+function renderProjImages() {
+  const wrap = document.getElementById('pImagesWrap');
+  if (!wrap) return;
+  if (!window._projImages.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = window._projImages.map((url, i) => `
+    <div style="position:relative;display:inline-block">
+      <img src="${url}" style="width:80px;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-border)">
+      <button onclick="removeProjImage(${i})"
+        style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;
+               border-radius:50%;width:20px;height:20px;font-size:.7rem;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;font-weight:800">✕</button>
+    </div>`).join('');
+}
+
+window.removeProjImage = function(i) {
+  window._projImages.splice(i, 1);
+  renderProjImages();
+};
+
+window.uploadProjectImages = async function(event) {
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  const progressWrap = document.getElementById('pImagesProgress');
+  const progressBar  = document.getElementById('pImagesProgressBar');
+  const btn = event.target.nextElementSibling;
+  if (progressWrap) progressWrap.style.display = 'block';
+  if (btn) btn.disabled = true;
+
+  let done = 0;
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'taj-alibdaa');
+    formData.append('folder', 'taj-alibdaa/projects');
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/Taj-Alibdaa/image/upload', {
+        method: 'POST', body: formData
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        window._projImages.push(data.secure_url);
+        // Auto-set first image as cover if empty
+        const coverInput = document.getElementById('pCoverUrl');
+        if (coverInput && !coverInput.value && window._projImages.length === 1) {
+          coverInput.value = data.secure_url;
+          const prev = document.getElementById('pCoverPreview');
+          if (prev) { prev.src = data.secure_url; prev.style.display = 'block'; }
+        }
+      }
+    } catch(e) { console.error(e); }
+    done++;
+    if (progressBar) progressBar.style.width = Math.round((done/files.length)*100) + '%';
+  }
+  renderProjImages();
+  toast(`✅ تم رفع ${done} صورة`);
+  setTimeout(() => { if (progressWrap) progressWrap.style.display = 'none'; }, 1500);
+  if (btn) btn.disabled = false;
+  event.target.value = '';
+};
+
+window.uploadPdfToCloudinary = async function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const progressWrap = document.getElementById('pPdfProgress');
+  const progressBar  = document.getElementById('pPdfProgressBar');
+  const btn = event.target.nextElementSibling;
+  if (progressWrap) progressWrap.style.display = 'block';
+  if (btn) btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'taj-alibdaa');
+  formData.append('folder', 'taj-alibdaa/projects/pdfs');
+  formData.append('resource_type', 'raw');
+
+  try {
+    const res = await fetch('https://api.cloudinary.com/v1_1/Taj-Alibdaa/raw/upload', {
+      method: 'POST', body: formData
+    });
+    const data = await res.json();
+    if (data.secure_url) {
+      document.getElementById('pPdfUrl').value = data.secure_url;
+      toast('✅ تم رفع الـ PDF');
+    }
+    if (progressBar) progressBar.style.width = '100%';
+    setTimeout(() => { if (progressWrap) progressWrap.style.display = 'none'; }, 1500);
+  } catch(e) {
+    toast('❌ فشل رفع PDF: ' + e.message, 'err');
+    if (progressWrap) progressWrap.style.display = 'none';
+  } finally {
+    if (btn) btn.disabled = false;
     event.target.value = '';
   }
 };
