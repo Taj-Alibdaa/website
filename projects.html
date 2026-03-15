@@ -471,7 +471,7 @@ footer span{color:var(--red);font-weight:700}
 
 <!-- ══ MASONRY GALLERY ════════════════════════ -->
 <section class="gallery-section">
-  <div class="masonry-grid" id="masonryGrid">
+  <div class="masonry-grid" id="masonryGrid" data-alias="projects-grid">
     <!-- Skeleton placeholders while loading -->
     <div class="skeleton-card" id="sk1">
       <div class="skeleton skeleton-img" style="height:220px"></div>
@@ -685,7 +685,7 @@ function applyFilters(){
   let filtered = allProjects.filter(p=>{
     const matchCat = currentCat==='all' || (p.category||'')=== currentCat;
     const matchQ   = !q ||
-      (p.title||'').toLowerCase().includes(q) ||
+      (p.title||p.name||'').toLowerCase().includes(q) ||
       (p.description||'').toLowerCase().includes(q) ||
       (p.category||'').toLowerCase().includes(q);
     return matchCat && matchQ;
@@ -699,11 +699,21 @@ function applyFilters(){
 // RENDER GRID
 // ══════════════════════════════════════════
 function renderGrid(projects){
-  const grid = document.getElementById('masonryGrid');
+  const grid = document.getElementById('masonryGrid') || document.getElementById('projects-grid');
   if(!projects.length){ renderEmpty(); return; }
 
   grid.innerHTML = projects.map((p, i)=>{
-    const cover   = (p.images && p.images[0]) || 'assets/images/placeholder.jpg';
+    // Accept imageUrl (saved by admin) or images[0] or coverUrl, then convert Drive links
+    function toDirect(u){
+      if(!u) return '';
+      if(u.includes('uc?export=view')) return u;
+      const m=u.match(/\/file\/d\/([^/]+)/);
+      if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+      return u;
+    }
+    const cover = toDirect(
+      (p.images && p.images[0]) || p.imageUrl || p.coverUrl
+    ) || 'https://via.placeholder.com/400x280/f8f8f8/981B1E?text=مشروع';
     const imgCnt  = (p.images||[]).length;
     const hasVid  = !!p.video;
     const dateStr = p.createdAt
@@ -724,7 +734,7 @@ function renderGrid(projects){
         </div>
         <div class="proj-card-body">
           ${p.category ? `<div class="proj-card-cat">${p.category}</div>` : ''}
-          <div class="proj-card-title">${p.title||'بدون عنوان'}</div>
+          <div class="proj-card-title">${p.title||p.name||'بدون عنوان'}</div>
           ${p.description ? `<div class="proj-card-desc">${p.description}</div>` : ''}
           <div class="proj-card-footer">
             <span class="proj-card-date">${dateStr}</span>
@@ -753,11 +763,11 @@ function openDetail(id){
   if(!p) return;
 
   // Populate header
-  document.getElementById('pdHeaderTitle').textContent = p.title||'';
+  document.getElementById('pdHeaderTitle').textContent = p.title||p.name||'';
   document.getElementById('pdHeaderCat').textContent   = p.category||'مشروع';
 
   // Populate info
-  document.getElementById('pdTitle').textContent    = p.title||'';
+  document.getElementById('pdTitle').textContent    = p.title||p.name||'';
   document.getElementById('pdDesc').textContent     = p.description||'لا يوجد وصف لهذا المشروع.';
   document.getElementById('pdMetaCat').textContent  = p.category||'—';
   document.getElementById('pdMetaImgs').textContent = (p.images||[]).length + ' صورة';
@@ -769,8 +779,18 @@ function openDetail(id){
   document.getElementById('pdMetaDate').textContent = dateStr;
 
   // Build slider
-  pdImages = (p.images && p.images.length) ? p.images
-           : ['https://via.placeholder.com/800x480/f8f8f8/981B1E?text=لا+توجد+صورة'];
+  function toDirect(u){
+    if(!u) return '';
+    if(u.includes('uc?export=view')) return u;
+    const m=u.match(/\/file\/d\/([^/]+)/);
+    if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+    return u;
+  }
+  // Build image list: use images[] if available, else fall back to imageUrl/coverUrl
+  let rawImgs = (p.images && p.images.length) ? p.images
+              : [p.imageUrl||p.coverUrl].filter(Boolean);
+  pdImages = rawImgs.map(toDirect).filter(Boolean);
+  if(!pdImages.length) pdImages = ['https://via.placeholder.com/800x480/f8f8f8/981B1E?text=لا+توجد+صورة'];
   pdIndex  = 0;
   buildPdSlider();
 
