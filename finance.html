@@ -840,20 +840,20 @@ function buildDocHTML(type,d){
   const sigHtml  = sigUrl  ? `<img src="${sigUrl}"  style="max-height:60px;display:block;margin:0 auto 4px;object-fit:contain" alt="توقيع">` : '';
   const stmpHtml = stmpUrl ? `<img src="${stmpUrl}" style="max-height:60px;display:block;margin:0 auto 4px;object-fit:contain" alt="ختم">` : '';
 
-  h+=`<div class="doc-sigs">
-    <div class="doc-sig">
-      ${sigHtml}
-      <div class="doc-sig-line"></div>
-      <span>توقيع ${type==='receipt'?'المستلم':'المدير'}</span></div>
-    <div class="doc-sig">
-      ${stmpHtml}
-      <div class="doc-sig-line"></div>
-      <span>توقيع المدير المالي</span></div>
+  h+=`<div class="signatures" style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:2.5rem;gap:2rem">
+    <div class="stamp" style="text-align:center;min-width:120px">
+      ${stmpUrl ? `<img id="stamp" src="${stmpUrl}" style="max-height:80px;max-width:120px;object-fit:contain;display:block;margin:0 auto" alt="ختم">` : '<div style="height:80px"></div>'}
+    </div>
+    <div class="signature" style="text-align:center;min-width:120px">
+      ${sigUrl ? `<img id="signature" src="${sigUrl}" style="max-height:80px;max-width:120px;object-fit:contain;display:block;margin:0 auto" alt="توقيع">` : '<div style="height:80px"></div>'}
+    </div>
   </div></div>`;
   return h;
 }
 
-function previewDocPDF(){
+async function previewDocPDF(){
+  // Ensure stamp/sig is loaded before building HTML
+  await (window.TAJ_STAMP_READY || Promise.resolve());
   const type=$('dType').value;
   const isItems=type==='invoice'||type==='quotation';
   const t=isItems?recalc():{gross:toNum($('dAmt').value),net:toNum($('dAmt').value)};
@@ -1375,13 +1375,11 @@ const app = initializeApp({
 const db = getFirestore(app);
 const st = getStorage(app);
 
-// Load stamp/sig settings and expose globally
-(async()=>{
-  try{
-    const snap = await getDoc(doc(db,'settings','stamp'));
-    window.TAJ_STAMP = snap.exists() ? snap.data() : {sigUrl:'',stampUrl:''};
-  }catch(e){ window.TAJ_STAMP = {sigUrl:'',stampUrl:''}; }
-})();
+// Load stamp/sig settings — expose as a Promise so callers can await it
+window.TAJ_STAMP = {sigUrl:'',stampUrl:''};
+window.TAJ_STAMP_READY = getDoc(doc(db,'settings','stamp')).then(snap=>{
+  if(snap.exists()) window.TAJ_STAMP = snap.data();
+}).catch(()=>{});
 
 /* ── Bridge: Firebase functions exposed to global scope ── */
 window.TAJ_UPLOAD = (file, folder) => new Promise((resolve,reject)=>{
