@@ -425,6 +425,7 @@ footer span{color:var(--red);font-weight:700}
 </head>
 <body>
 
+
 <!-- ══ NAV ══════════════════════════════════════ -->
 <nav>
   <div class="nav-inner">
@@ -522,8 +523,8 @@ footer span{color:var(--red);font-weight:700}
     <!-- Slider -->
     <div class="pd-slider" id="pdSlider">
       <div class="pd-slider-nav">
-        <button class="pd-nav-btn" onclick="pdSlide(1)">&#8250;</button>
-        <button class="pd-nav-btn" onclick="pdSlide(-1)">&#8249;</button>
+        <button class="pd-nav-btn" onclick="nextSlide()">&#8250;</button>
+        <button class="pd-nav-btn" onclick="prevSlide()">&#8249;</button>
       </div>
       <div class="pd-slider-dots" id="pdDots"></div>
       <div class="pd-img-counter" id="pdCounter">1 / 1</div>
@@ -569,6 +570,16 @@ footer span{color:var(--red);font-weight:700}
   </div>
 </div>
 
+    <!-- PDF -->
+    <div class="pd-video-section" id="pdPdfSection" style="display:none">
+      <div class="pd-section-label">ملف PDF</div>
+      <div class="video-wrap">
+        <iframe id="pdPdfFrame" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ FIREBASE STATUS ═══════════════════════ -->
 <div class="fb-status" id="fbStatus">
   <span class="fb-dot"></span>
@@ -583,309 +594,15 @@ footer span{color:var(--red);font-weight:700}
 </footer>
 
 <!-- ══════════════════════════════════════════
-     FIREBASE CONFIG — ضع بياناتك هنا
+     FIREBASE SDK (v9 compat)
 ══════════════════════════════════════════ -->
-<script>
-// ┌─────────────────────────────────────────────────────┐
-// │  🔥 FIREBASE CONFIG — استبدل بالبيانات من Console  │
-// │  firebase.google.com → Project Settings → Your Apps │
-// └─────────────────────────────────────────────────────┘
-const firebaseConfig = {
-  apiKey: "AIzaSyAaqn0emE1XRE1r95jzz6zOyHJpYhG6PDE",
-  authDomain: "taj-alibdaa.firebaseapp.com",
-  projectId: "taj-alibdaa",
-  storageBucket: "taj-alibdaa.firebasestorage.app",
-  messagingSenderId: "822530121102",
-  appId: "1:822530121102:web:4f105f37c9b7a31e9298df",
-  measurementId: "G-59X0VPPWXE"
-};
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+<!-- ══════════════════════════════════════════
+     PROJECTS LOGIC (منفصل للاستقرار)
+══════════════════════════════════════════ -->
+<script src="projects.js"></script>
 
-let allProjects = [];
-let currentCat  = 'all';
-let pdIndex     = 0;
-let pdImages    = [];
-
-// ══════════════════════════════════════════
-// FIREBASE STATUS
-// ══════════════════════════════════════════
-function setStatus(state, txt){
-  const el = document.getElementById('fbStatus');
-  el.className = 'fb-status ' + state;
-  document.getElementById('fbStatusText').textContent = txt;
-}
-
-// ══════════════════════════════════════════
-// REAL-TIME LISTENER
-// ══════════════════════════════════════════
-db.collection('projects')
-  .orderBy('createdAt', 'desc')
-  .onSnapshot(snapshot => {
-    allProjects = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-    setStatus('connected', 'متصل بـ Firebase ✓');
-    removeSkeleton();
-    buildFilterChips();
-    applyFilters();
-  }, err => {
-    setStatus('error', 'تعذّر الاتصال');
-    console.error(err);
-    removeSkeleton();
-    // Fallback to localStorage
-    const local = localStorage.getItem('taj_projects');
-    if(local){
-      allProjects = JSON.parse(local);
-      buildFilterChips();
-      applyFilters();
-    } else {
-      renderEmpty();
-    }
-  });
-
-// ══════════════════════════════════════════
-// REMOVE SKELETONS
-// ══════════════════════════════════════════
-function removeSkeleton(){
-  ['sk1','sk2','sk3','sk4'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.remove();
-  });
-}
-
-// ══════════════════════════════════════════
-// BUILD FILTER CHIPS
-// ══════════════════════════════════════════
-function buildFilterChips(){
-  const cats = ['all', ...new Set(allProjects.map(p=>p.category||'').filter(Boolean))];
-  const wrap = document.getElementById('filterChips');
-  wrap.innerHTML = cats.map(c=>`
-    <button class="chip${c===currentCat?' active':''}"
-      data-cat="${c}" onclick="selectCat(this)">
-      ${c==='all' ? 'الكل' : c}
-    </button>
-  `).join('');
-}
-
-function selectCat(btn){
-  currentCat = btn.dataset.cat;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilters();
-}
-
-// ══════════════════════════════════════════
-// FILTER + SEARCH
-// ══════════════════════════════════════════
-function applyFilters(){
-  const q = (document.getElementById('searchInput').value||'').trim().toLowerCase();
-  let filtered = allProjects.filter(p=>{
-    const matchCat = currentCat==='all' || (p.category||'')=== currentCat;
-    const matchQ   = !q ||
-      (p.title||p.name||'').toLowerCase().includes(q) ||
-      (p.description||'').toLowerCase().includes(q) ||
-      (p.category||'').toLowerCase().includes(q);
-    return matchCat && matchQ;
-  });
-  document.getElementById('resultsCount').textContent =
-    filtered.length ? `${filtered.length} مشروع` : '';
-  renderGrid(filtered);
-}
-
-// ══════════════════════════════════════════
-// RENDER GRID
-// ══════════════════════════════════════════
-function renderGrid(projects){
-  const grid = document.getElementById('masonryGrid') || document.getElementById('projects-grid');
-  if(!projects.length){ renderEmpty(); return; }
-
-  grid.innerHTML = projects.map((p, i)=>{
-    // Accept imageUrl (saved by admin) or images[0] or coverUrl, then convert Drive links
-    function toDirect(u){
-      if(!u) return '';
-      if(u.includes('uc?export=view')) return u;
-      const m=u.match(/\/file\/d\/([^/]+)/);
-      if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-      return u;
-    }
-    const cover = toDirect(
-      (p.images && p.images[0]) || p.imageUrl || p.coverUrl
-    ) || 'https://via.placeholder.com/400x280/f8f8f8/981B1E?text=مشروع';
-    const imgCnt  = (p.images||[]).length;
-    const hasVid  = !!p.video;
-    const dateStr = p.createdAt
-      ? new Date(p.createdAt.seconds*1000).toLocaleDateString('ar-SA')
-      : '';
-
-    return `
-    <div class="masonry-item" style="animation-delay:${i*0.06}s" onclick="openDetail('${p.id}')">
-      <div class="proj-card">
-        <div class="proj-card-img">
-          <img src="${cover}" alt="${p.title||''}"
-               loading="lazy"
-               onerror="this.src='https://via.placeholder.com/400x280/f8f8f8/981B1E?text=صورة'"/>
-          <div class="proj-card-overlay">
-            <div class="overlay-view-btn">عرض المشروع</div>
-            ${imgCnt>1 ? `<div class="overlay-imgs-count">📷 ${imgCnt} صور</div>` : ''}
-          </div>
-        </div>
-        <div class="proj-card-body">
-          ${p.category ? `<div class="proj-card-cat">${p.category}</div>` : ''}
-          <div class="proj-card-title">${p.title||p.name||'بدون عنوان'}</div>
-          ${p.description ? `<div class="proj-card-desc">${p.description}</div>` : ''}
-          <div class="proj-card-footer">
-            <span class="proj-card-date">${dateStr}</span>
-            ${hasVid ? '<span class="proj-card-has-video">▶ فيديو</span>' : ''}
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderEmpty(){
-  document.getElementById('masonryGrid').innerHTML = `
-    <div class="empty-state">
-      <div class="es-icon">🏛</div>
-      <h3>لا توجد مشاريع</h3>
-      <p>لم يتم إضافة أي مشروع بعد. ابدأ الإضافة من لوحة الإدارة.</p>
-    </div>`;
-}
-
-// ══════════════════════════════════════════
-// PROJECT DETAIL
-// ══════════════════════════════════════════
-function openDetail(id){
-  const p = allProjects.find(x=>x.id===id);
-  if(!p) return;
-
-  // Populate header
-  document.getElementById('pdHeaderTitle').textContent = p.title||p.name||'';
-  document.getElementById('pdHeaderCat').textContent   = p.category||'مشروع';
-
-  // Populate info
-  document.getElementById('pdTitle').textContent    = p.title||p.name||'';
-  document.getElementById('pdDesc').textContent     = p.description||'لا يوجد وصف لهذا المشروع.';
-  document.getElementById('pdMetaCat').textContent  = p.category||'—';
-  document.getElementById('pdMetaImgs').textContent = (p.images||[]).length + ' صورة';
-  document.getElementById('pdMetaVideoRow').style.display = p.video ? '' : 'none';
-
-  const dateStr = p.createdAt
-    ? new Date(p.createdAt.seconds*1000).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
-    : '—';
-  document.getElementById('pdMetaDate').textContent = dateStr;
-
-  // Build slider
-  function toDirect(u){
-    if(!u) return '';
-    if(u.includes('uc?export=view')) return u;
-    const m=u.match(/\/file\/d\/([^/]+)/);
-    if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-    return u;
-  }
-  // Build image list: use images[] if available, else fall back to imageUrl/coverUrl
-  let rawImgs = (p.images && p.images.length) ? p.images
-              : [p.imageUrl||p.coverUrl].filter(Boolean);
-  pdImages = rawImgs.map(toDirect).filter(Boolean);
-  if(!pdImages.length) pdImages = ['https://via.placeholder.com/800x480/f8f8f8/981B1E?text=لا+توجد+صورة'];
-  pdIndex  = 0;
-  buildPdSlider();
-
-  // Video
-  const vidSec   = document.getElementById('pdVideoSection');
-  const vidFrame = document.getElementById('pdVideoFrame');
-  if(p.video){
-    vidFrame.src = p.video;
-    vidSec.style.display = '';
-  } else {
-    vidFrame.src = '';
-    vidSec.style.display = 'none';
-  }
-
-  // Open
-  document.getElementById('projectDetail').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  document.getElementById('projectDetail').scrollTop = 0;
-}
-
-function closeDetail(){
-  document.getElementById('projectDetail').classList.remove('open');
-  document.body.style.overflow = '';
-  document.getElementById('pdVideoFrame').src = '';
-}
-
-// ── Slider ──────────────────────────────
-function buildPdSlider(){
-  const slider = document.getElementById('pdSlider');
-  // Remove old slides
-  slider.querySelectorAll('.pd-slide').forEach(s=>s.remove());
-  document.getElementById('pdDots').innerHTML = '';
-
-  const nav     = slider.querySelector('.pd-slider-nav');
-  const dots    = document.getElementById('pdDots');
-  const counter = document.getElementById('pdCounter');
-
-  pdImages.forEach((src, i)=>{
-    const slide = document.createElement('div');
-    slide.className = 'pd-slide' + (i===0?' active':'');
-    slide.innerHTML = `<img src="${src}" alt="صورة ${i+1}"
-      onerror="this.src='https://via.placeholder.com/800x480/f8f8f8/981B1E?text=صورة'"/>`;
-    slider.insertBefore(slide, nav);
-
-    const dot = document.createElement('button');
-    dot.className = 'pd-dot' + (i===0?' active':'');
-    dot.onclick = ()=> goToSlide(i);
-    dots.appendChild(dot);
-  });
-
-  counter.textContent = `1 / ${pdImages.length}`;
-  nav.style.display = pdImages.length <= 1 ? 'none' : '';
-
-  // Thumbnails
-  const thumbs = document.getElementById('pdThumbs');
-  if(pdImages.length > 1){
-    thumbs.style.display = 'flex';
-    thumbs.innerHTML = pdImages.map((src,i)=>`
-      <div class="pd-thumb${i===0?' active':''}" onclick="goToSlide(${i})">
-        <img src="${src}" alt="" onerror="this.style.opacity='.3'"/>
-      </div>`).join('');
-  } else {
-    thumbs.style.display = 'none';
-  }
-}
-
-function pdSlide(dir){
-  goToSlide((pdIndex + dir + pdImages.length) % pdImages.length);
-}
-
-function goToSlide(n){
-  pdIndex = n;
-  document.querySelectorAll('.pd-slide').forEach((s,i)=> s.classList.toggle('active', i===n));
-  document.querySelectorAll('.pd-dot').forEach((d,i)=> d.classList.toggle('active', i===n));
-  document.querySelectorAll('.pd-thumb').forEach((t,i)=> t.classList.toggle('active', i===n));
-  document.getElementById('pdCounter').textContent = `${n+1} / ${pdImages.length}`;
-}
-
-// ══════════════════════════════════════════
-// NAV
-// ══════════════════════════════════════════
-function toggleMenu(){
-  document.getElementById('navMenu').classList.toggle('open');
-}
-
-// ══════════════════════════════════════════
-// KEYBOARD
-// ══════════════════════════════════════════
-document.addEventListener('keydown', e=>{
-  const detail = document.getElementById('projectDetail');
-  if(!detail.classList.contains('open')) return;
-  if(e.key === 'Escape')       closeDetail();
-  if(e.key === 'ArrowRight')   pdSlide(-1);
-  if(e.key === 'ArrowLeft')    pdSlide(1);
-});
-</script>
 </body>
 </html>
