@@ -109,24 +109,51 @@ nav{
 .filter-chip.active .chip-count{background:rgba(255,255,255,.25)}
 .filter-all-icon{font-size:1rem}
 
-/* ══ PHOTO GRID ══ */
+/* ══ VIEW TOGGLE ══ */
+.view-toggle{
+  display:flex;align-items:center;gap:.4rem;
+}
+.view-btn{
+  width:36px;height:36px;border:1.5px solid var(--gray-border);
+  border-radius:8px;background:white;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:var(--transition);padding:0;
+  color:var(--gray-mid);
+}
+.view-btn:hover{border-color:var(--red);color:var(--red)}
+.view-btn.active{background:var(--red);border-color:var(--red);color:white;box-shadow:0 3px 10px rgba(152,27,30,.3)}
+.view-btn svg{width:16px;height:16px;fill:currentColor}
+
+/* ══ PHOTO GRID — base ══ */
 .photo-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:4px;
+  gap:6px;
+  /* default = 4 columns */
+  grid-template-columns:repeat(4,1fr);
 }
+
+/* view modes */
+.photo-grid.view-4 { grid-template-columns:repeat(4,1fr); gap:6px; }
+.photo-grid.view-6 { grid-template-columns:repeat(6,1fr); gap:4px; }
+.photo-grid.view-masonry{
+  display:block;
+  column-count:3;
+  column-gap:6px;
+}
+
+/* standard grid item */
 .photo-item{
-  position:relative;overflow:hidden;border-radius:4px;
+  position:relative;overflow:hidden;border-radius:6px;
   aspect-ratio:1/1;background:var(--gray-light);cursor:pointer;
 }
 .photo-item img{
   width:100%;height:100%;object-fit:cover;
   transition:transform .4s cubic-bezier(.4,0,.2,1);display:block;
 }
-.photo-item:hover img{transform:scale(1.07)}
+.photo-item:hover img{transform:scale(1.06)}
 .photo-item-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 55%);
+  background:linear-gradient(to top,rgba(0,0,0,.72) 0%,transparent 55%);
   opacity:0;transition:var(--transition);
   display:flex;align-items:flex-end;padding:10px;
 }
@@ -136,9 +163,18 @@ nav{
   background:rgba(152,27,30,.85);padding:3px 9px;border-radius:12px;
 }
 
+/* masonry item overrides */
+.view-masonry .photo-item{
+  aspect-ratio:unset;display:inline-block;width:100%;
+  margin-bottom:6px;break-inside:avoid;
+}
+.view-masonry .photo-item img{
+  height:auto;width:100%;display:block;
+}
+
 /* skeleton */
 .photo-skeleton{
-  aspect-ratio:1/1;border-radius:4px;
+  aspect-ratio:1/1;border-radius:6px;
   background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
   background-size:200% 100%;animation:shimmer 1.2s infinite;
 }
@@ -156,6 +192,7 @@ nav{
 .gallery-meta{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:1.2rem;color:var(--gray-mid);font-size:.85rem;
+  flex-wrap:wrap;gap:.6rem;
 }
 .gallery-meta strong{color:var(--black)}
 
@@ -244,13 +281,17 @@ footer span{color:var(--red);font-weight:700}
   .nav-center a{padding:11px 1.5rem;border-radius:0}
   .nav-center a::after{display:none}
 }
-@media(max-width:600px){
-  .photo-grid{grid-template-columns:repeat(3,1fr);gap:3px}
+@media(max-width:768px){
+  .photo-grid.view-4 { grid-template-columns:repeat(2,1fr); }
+  .photo-grid.view-6 { grid-template-columns:repeat(3,1fr); }
+  .view-masonry { column-count:2; }
   .page-header h1{font-size:1.8rem}
   .filter-chip{padding:6px 12px;font-size:.78rem}
 }
-@media(max-width:400px){
-  .photo-grid{grid-template-columns:repeat(2,1fr)}
+@media(max-width:480px){
+  .photo-grid.view-4 { grid-template-columns:repeat(2,1fr); }
+  .photo-grid.view-6 { grid-template-columns:repeat(2,1fr); }
+  .view-masonry { column-count:2; }
 }
 </style>
 </head>
@@ -267,9 +308,11 @@ footer span{color:var(--red);font-weight:700}
       </div>
     </a>
     <ul class="nav-center" id="navLinks">
-      <li><a href="index.html" data-ar="الرئيسية" data-en="Home">الرئيسية</a></li>
+      <li><a href="index.html" data-ar="الصفحة الرئيسية" data-en="Home">الصفحة الرئيسية</a></li>
+      <li><a href="index.html#services" data-ar="الخدمات" data-en="Services">الخدمات</a></li>
+      <li><a href="projects.html" class="active" data-ar="معرض تاج" data-en="Taj Gallery">معرض تاج</a></li>
       <li><a href="about.html" data-ar="من نحن" data-en="About Us">من نحن</a></li>
-      <li><a href="projects.html" class="active" data-ar="الأعمال" data-en="Projects">الأعمال</a></li>
+      <li><a href="contact.html" data-ar="تواصل معنا" data-en="Contact Us">تواصل معنا</a></li>
     </ul>
     <div class="nav-right">
       <button class="lang-btn" onclick="toggleLang()" id="langBtn">EN</button>
@@ -280,7 +323,7 @@ footer span{color:var(--red);font-weight:700}
 
 <!-- PAGE HEADER -->
 <div class="page-header">
-  <h1>معرض <span class="red">أعمالنا</span></h1>
+  <h1>معرض <span class="red">تاج</span></h1>
   <p>اكتشف تصاميمنا الداخلية والخارجية المتميزة</p>
 </div>
 
@@ -299,12 +342,23 @@ footer span{color:var(--red);font-weight:700}
   <!-- META ROW -->
   <div class="gallery-meta">
     <span id="galleryMeta">جاري التحميل...</span>
+    <!-- VIEW TOGGLE -->
+    <div class="view-toggle">
+      <button class="view-btn active" id="btn4" onclick="setView('4',this)" title="4 أعمدة">
+        <svg viewBox="0 0 16 16"><rect x="0" y="0" width="3.5" height="3.5"/><rect x="4.2" y="0" width="3.5" height="3.5"/><rect x="8.4" y="0" width="3.5" height="3.5"/><rect x="12.6" y="0" width="3.5" height="3.5"/><rect x="0" y="4.2" width="3.5" height="3.5"/><rect x="4.2" y="4.2" width="3.5" height="3.5"/><rect x="8.4" y="4.2" width="3.5" height="3.5"/><rect x="12.6" y="4.2" width="3.5" height="3.5"/></svg>
+      </button>
+      <button class="view-btn" id="btn6" onclick="setView('6',this)" title="6 أعمدة">
+        <svg viewBox="0 0 18 12"><rect x="0" y="0" width="2.5" height="2.5"/><rect x="3.1" y="0" width="2.5" height="2.5"/><rect x="6.2" y="0" width="2.5" height="2.5"/><rect x="9.3" y="0" width="2.5" height="2.5"/><rect x="12.4" y="0" width="2.5" height="2.5"/><rect x="15.5" y="0" width="2.5" height="2.5"/><rect x="0" y="3.1" width="2.5" height="2.5"/><rect x="3.1" y="3.1" width="2.5" height="2.5"/><rect x="6.2" y="3.1" width="2.5" height="2.5"/><rect x="9.3" y="3.1" width="2.5" height="2.5"/><rect x="12.4" y="3.1" width="2.5" height="2.5"/><rect x="15.5" y="3.1" width="2.5" height="2.5"/></svg>
+      </button>
+      <button class="view-btn" id="btnM" onclick="setView('masonry',this)" title="عرض متدرج">
+        <svg viewBox="0 0 16 16"><rect x="0" y="0" width="6.5" height="9"/><rect x="7.5" y="0" width="8.5" height="5"/><rect x="7.5" y="6" width="8.5" height="10"/><rect x="0" y="10" width="6.5" height="6"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- PHOTO GRID -->
-  <div class="photo-grid" id="photoGrid">
+  <div class="photo-grid view-20" id="photoGrid">
     <!-- skeletons -->
-    <div class="photo-skeleton"></div>
     <div class="photo-skeleton"></div>
     <div class="photo-skeleton"></div>
     <div class="photo-skeleton"></div>
@@ -460,16 +514,16 @@ function buildFilterChips() {
     .sort((a, b) => (catCounts[b] || 0) - (catCounts[a] || 0));
 
   const catIcons = {
-    'صالة': '🛋️', 'مجلس': '🪑', 'مطبخ': '🍳', 'غرفة نوم': '🛏️',
-    'حمام': '🚿', 'مكتب': '💼', 'خارجي': '🌿', 'واجهة': '🏛️',
-    'حديقة': '🌳', 'مدخل': '🚪', 'ممر': '🚶', 'سطح': '☀️',
+    'صالة': '', 'مجلس': '', 'مطبخ': '', 'غرفة نوم': '',
+    'حمام': '', 'مكتب': '', 'خارجي': '', 'واجهة': '',
+    'حديقة': '', 'مدخل': '', 'ممر': '', 'سطح': '',
   };
 
   cats.forEach(cat => {
     const btn = document.createElement('button');
     btn.className = 'filter-chip';
     btn.dataset.cat = cat;
-    btn.innerHTML = `${catIcons[cat] || '📐'} ${cat} <span class="chip-count">${catCounts[cat] || 0}</span>`;
+    btn.innerHTML = `${catIcons[cat] || ''} ${cat} <span class="chip-count">${catCounts[cat] || 0}</span>`;
     btn.onclick = () => filterGallery(cat, btn);
     bar.appendChild(btn);
   });
@@ -521,7 +575,7 @@ function renderGrid() {
         src="${photo.url}"
         alt="${photo.cat}"
         loading="lazy"
-        onerror="this.closest('.photo-item').style.display='none'"
+        onerror="this.closest('.photo-item').style.display='grid'"
       >
       <div class="photo-item-overlay">
         <span class="photo-item-label">${photo.cat}</span>
@@ -580,6 +634,32 @@ document.addEventListener('keydown', e => {
 document.getElementById('lightbox').addEventListener('click', e => {
   if (e.target === document.getElementById('lightbox')) closeLightbox();
 });
+
+// ══════════════════════════════════════════════════════════════
+//  VIEW TOGGLE
+// ══════════════════════════════════════════════════════════════
+let currentView = '4';
+
+function setView(mode, btn) {
+  currentView = mode;
+  const grid = document.getElementById('photoGrid');
+
+  // remove all view classes
+  grid.classList.remove('view-4', 'view-6', 'view-masonry');
+
+  if (mode === 'masonry') {
+    grid.classList.add('view-masonry');
+  } else {
+    grid.classList.add('view-' + mode);
+  }
+
+  // update active button
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  // re-render to pick up masonry vs grid item styles
+  renderGrid();
+}
 
 // ══════════════════════════════════════════════════════════════
 //  NAV HELPERS
